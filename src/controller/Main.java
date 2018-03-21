@@ -45,13 +45,8 @@ public class Main extends PApplet {
         loadMainWindowGUI();
     }
 
-    boolean setLoc = true;
     public void pre() {
-        if (setLoc) {
             frame.setLocation(500, 200);
-            setLoc = false;
-        }
-        println("fired");
     }
 
     public void draw() {
@@ -63,6 +58,7 @@ public class Main extends PApplet {
     void loadMainWindowGUI() {
         MainGui = new KGUI(this);
         Region sidePanel = MainGui.region(0, 0, width/3, height, RELATIVE);
+        Region.MenuBar menu =  sidePanel.createMenu();
         MainGui.button(sidePanel, 80, 0, 30, 30, sidePanel, "<", ">");
         DropDownTree ddt = MainGui.dropDownTree(5, 10, 95, 99, sidePanel);
         DropDownTree.folder mem;

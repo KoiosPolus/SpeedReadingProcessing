@@ -18,7 +18,7 @@ public class DropDownTree extends RegionComponent {
         hasColor = false;
         selectable = false;
         MemberList = new ArrayList<folder>();
-        this.gui = gui;
+//        this.gui = gui;
         app = gui.applet;
         mouse = gui.mouse;
         mousePos = mouse.pos;
@@ -71,14 +71,14 @@ public class DropDownTree extends RegionComponent {
 //        KGUI gui;
 
         folder(DropDownTree enclosure_, folder parent_, String title_) {
-            gui = enclosure_.gui;
+//            gui = enclosure_.gui;
             title = title_;
             enclosure = enclosure_;
             parent = parent_;
-            app = enclosure.app;
-            mouse = enclosure.mouse;
+//            app = enclosure.app;
+//            mouse = enclosure.mouse;
             mousePos = mouse.pos;
-            children = new ArrayList<folder>();
+            children = new ArrayList<>();
             target = this;
             vertices = new PVector[3];
             selectable = true;

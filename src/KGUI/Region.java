@@ -10,7 +10,7 @@ import static processing.core.PApplet.lerp;
 import static processing.core.PApplet.map;
 
 public class Region extends RegionComponent implements Executable {
-    ArrayList<DropDownTree.folder> MemberList;
+    private ArrayList<RegionComponent> MemberList;
     Executable target = null;
     String buttonText;
     final int bezel = 10;
@@ -20,7 +20,8 @@ public class Region extends RegionComponent implements Executable {
     private PVector pPos, pPosEnd;
     private int vectorType;
 
-    Region(KGUI gui, int startX, int startY,int endX, int endY, int mode) {
+    Region(KGUI gui, int startX, int startY, int endX, int endY, int mode) {
+        MemberList = new ArrayList<>();
         vectorType = mode;
         pos = new PVector(startX, startY);
         posEnd = new PVector(startX + endX, startY + endY);
@@ -46,17 +47,20 @@ public class Region extends RegionComponent implements Executable {
         return new PVector(newX, newY);
     }
 
-    final MenuBar createMenu() {
-        return new MenuBar(gui, (int) pos.x, (int) pos.y, (int) posEnd.x,  (int) (pos.y + 100), ABSOLUTE);
+    public final MenuBar createMenu() {
+        MenuBar menu = new MenuBar(gui, (int) pos.x, (int) pos.y, (int) posEnd.x, (int) (pos.y + 100), ABSOLUTE);
+        MemberList.add(menu);
+        return menu;
     }
 
+    @Override
     public void render() {
-        //renderDepth();
-        renderBox();
-
-        //if (activeElement == this) {
-        //  //activeElement = null;
-        //}
+        this.transition();
+        this.applyStyle();
+        this.renderShape();
+        for (RegionComponent e : this.MemberList) {
+            e.render();
+        }
     }
 
     boolean hasMoved() {
@@ -72,54 +76,57 @@ public class Region extends RegionComponent implements Executable {
         return false;
     }
 
-    void renderBox() {
+    void transition() {
         float moveDist = posEnd.x - pos.x;
         if (execTimer.percent() < 100) {
             hasMoved = true;
             if (hidden) {
-                pos.x =  lerp(pPos.x - moveDist, pPos.x, execTimer.percent()/100);
-                posEnd.x =  lerp(pPosEnd.x - moveDist, pPosEnd.x, execTimer.percent()/100);
+                pos.x = lerp(pPos.x - moveDist, pPos.x, execTimer.percent() / 100);
+                posEnd.x = lerp(pPosEnd.x - moveDist, pPosEnd.x, execTimer.percent() / 100);
             } else {
-                pos.x =  lerp(pPos.x, pPos.x - moveDist, execTimer.percent()/100);
-                posEnd.x =  lerp(pPosEnd.x, pPosEnd.x - moveDist, execTimer.percent()/100);
+                pos.x = lerp(pPos.x, pPos.x - moveDist, execTimer.percent() / 100);
+                posEnd.x = lerp(pPosEnd.x, pPosEnd.x - moveDist, execTimer.percent() / 100);
             }
         } else {
             hasMoved = false;
         }
+    }
 
+    void applyStyle() {
         //stroke(boarder1);
         app.noStroke();
-        app.fill(color(color1, colorAlpha1));
+        app.fill(color(primaryCol, primaryAlpha));
         app.strokeWeight(boarderWidth1);
-        //println(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, bezel2, bezel3, 0);
+    }
+
+    void renderShape() {
         app.rect(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, 0, 0, 0);
-        //if (isMouseOver()) {
-        //  int overlay = mousePressed ? overlay2 : overlay1;
-        //  fill(color(overlay, overlayAlpha));
-        //  noStroke();
-        //  rect(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, bezel2, bezel3, 0);
-        //}
     }
 
     public class MenuBar extends Region {
 
-        MenuBar(KGUI gui, int startX, int startY,int endX, int endY, int mode) {
-            super(gui, startX, startY,endX, endY, mode);
+        MenuBar(KGUI gui, int startX, int startY, int endX, int endY, int mode) {
+            super(gui, startX, startY, endX, endY, mode);
+            System.out.println(pos);
+            System.out.println(posEnd);
         }
 
         @Override
-        public void render() {
-            renderBox();
+        void applyStyle() {
+            app.noStroke();
+            app.fill(color(0, 255, 0, secondaryAlpha));
+            app.strokeWeight(boarderWidth2);
+        }
+
+        class MenuComponent extends ActivatorComponent {
+
+            @Override
+            public void render() {
+
+            }
         }
     }
 
-    class MenuComponent extends RegionComponent {
-
-        @Override
-        public void render() {
-
-        }
-    }
 }
 
 abstract class RegionComponent extends UI {
@@ -155,8 +162,8 @@ abstract class RegionComponent extends UI {
                 begin.x = lerp(begin.x, end.x, amt);
                 end.x = lerp(begin.x, end.x, amt);
                 break;
-                default:
-                    throw new RuntimeException("Invalid direction parameter, valid directions are: NORTH, SOUTH, EAST, WEST");
+            default:
+                throw new RuntimeException("Invalid direction parameter, valid directions are: NORTH, SOUTH, EAST, WEST");
         }
     }
 

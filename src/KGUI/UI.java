@@ -7,13 +7,31 @@ import static processing.core.PApplet.lerp;
 
 public abstract class UI implements KGUIConstants {
     PVector pos, posEnd;
-    private int colour, overlayColour;
+    int primaryCol = color1, secondaryCol = color2;
+    int primaryAlpha = overlayAlpha1, secondaryAlpha = overlayAlpha2;
+    int primaryOverlayCol = overlay1, secondaryOverlayCol = overlay2;
+    private int overlayCol = primaryOverlayCol;
     private final int depthOffset = 1, editModeDotRadii = 15, gridSize = 20;
     boolean hasColor, selectable = true, editable = true;
     static KGUI gui;
     static PApplet app;
     static KGUI.Mouse mouse;
     static PVector mousePos;
+
+    final void setPrimaryCol(int col) {
+        primaryCol = col;
+    }
+    final void setPrimaryCol(int col, int alpha) {
+        setPrimaryCol(col);
+        primaryAlpha = alpha;
+    }
+    final void setSecondaryCol(int col) {
+        secondaryCol = col;
+    }
+    final void setSecondaryCol(int col, int alpha) {
+        setSecondaryCol(col);
+        secondaryAlpha = alpha;
+    }
 
     abstract public void render();
 
@@ -30,9 +48,9 @@ public abstract class UI implements KGUIConstants {
 
     public void onMouseOver() {
         if (isMouseOver() || gui.activeElement == this) {
-            overlayColour = app.color(255, 50);
+            overlayCol = app.color(255, 50);
         } else {
-            overlayColour = app.color(100, 50);
+            overlayCol = app.color(100, 50);
         }
     }
 
@@ -57,11 +75,10 @@ public abstract class UI implements KGUIConstants {
         PVector posRelative = PVector.sub(posEnd, pos);
         app.noStroke();
         if (hasColor) {
-            System.out.println(colour);
-            app.fill(colour);
+            app.fill(primaryCol);
             app.rect(pos.x, pos.y, posRelative.x, posRelative.y);
         }
-        app.fill(overlayColour);
+        app.fill(overlayCol);
         app.rect(pos.x, pos.y, posRelative.x, posRelative.y);
 
         app.stroke(200, 200);

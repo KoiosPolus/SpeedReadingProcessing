@@ -1,16 +1,14 @@
 package KGUI;
 
-import javafx.scene.chart.Axis;
-
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.color;
 
-public class Button extends Activatable {
+public class Button extends ActivatorComponent {
     String buttonText;
     String[] stateText;
     int bezel = 10, state = 0, states;
 
-    Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui_, String... statesText) {
+    Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui, String... statesText) {
         region = region_;
         target = target_;
         calcRelPos(xPercent, yPercent, RELATIVE, sizeX, sizeY, ABSOLUTE);
@@ -19,10 +17,10 @@ public class Button extends Activatable {
         states = statesText.length;
         stateText = statesText;
         buttonText = stateText[0];
-        gui = gui_;
-        app = gui.applet;
-        mouse = gui.mouse;
-        mousePos = mouse.pos;
+//        this.gui = gui;
+//        this.app = gui.applet;
+//        this.mouse = gui.mouse;
+//        this.mousePos = mouse.pos;
     }
 
     Button() {

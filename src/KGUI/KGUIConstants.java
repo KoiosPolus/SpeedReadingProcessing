@@ -4,7 +4,8 @@ import processing.core.PApplet;
 import processing.core.PConstants;
 
 public interface KGUIConstants extends PConstants {
-    int color1 = PApplet.color(255), //-3098279, //color(100, 250, 120),
+    int background = PApplet.color(200),
+            color1 = PApplet.color(255), //-3098279, //color(100, 250, 120),
             boarder1 = -14541024, //color(50, 200, 70),
             color2 = -9459492, //color(50, 70, 200),
             boarder2 = PApplet.color(100, 120, 250),
