@@ -3,28 +3,30 @@ package KGUI;
 import processing.core.PApplet;
 import processing.core.PVector;
 import java.util.ArrayList;
+import java.util.List;
+import KGUI.Component.Timer;
+
 import static processing.core.PApplet.*;
 
 public class KGUI implements KGUIConstants {
-    UI activeElement;
+    Component activeElement;
     PVector editPVector;
     boolean editMode = false, isEditingVertex = false, snapToGrid = true, editVertex = false;
-    public ArrayList<UI> UIElementList;
-    public ArrayList<UI> EditedElements;
-    public ArrayList<Region> RegionList;
+    public List<Component> UIElementList;
+    public List<Component> EditedElements;
+    public List<Region> RegionList;
     PApplet applet;
     Mouse mouse;
-    UI.Timer keyTimer;
+    Timer keyTimer;
 
     public KGUI(PApplet parent) {
         applet = parent;
-        keyTimer = new UI.Timer(applet,0);
-//        applet.GUIList.add(this);
+        keyTimer = new Timer(applet,0);
         applet.strokeJoin(ROUND);
         applet.strokeCap(ROUND);
-        UIElementList = new ArrayList<UI>();
-        EditedElements = new ArrayList<UI>();
-        RegionList = new ArrayList<Region>();
+        UIElementList = new ArrayList<>();
+        EditedElements = new ArrayList<>();
+        RegionList = new ArrayList<>();
         mouse = new Mouse(this);
         mouse.update();
     }
@@ -37,9 +39,7 @@ public class KGUI implements KGUIConstants {
         //println("Rendering GUI with: " + GUIElementList.size() + " elements");
         mouse.update();
         keyHandler();
-        for (UI e : UIElementList) {
-            //for (int i = 0 ; i < UIElementList.size() ; i++) {
-            //  KGUI.UI e = UIElementList.get(i);
+        for (Component e : UIElementList) {
             e.onMouseOver();
             e.onMouseClick();
             e.renderEditMode(mouse);
@@ -93,7 +93,7 @@ public class KGUI implements KGUIConstants {
 
     void keyHandler() {
         if (applet.keyPressed && keyTimer.fired()) {
-            keyTimer = new UI.Timer(applet, 1);
+            keyTimer = new Timer(applet, 1);
             String type;
             if (applet.keyCode == 120) {
                 editMode = !editMode;
@@ -129,10 +129,10 @@ public class KGUI implements KGUIConstants {
 
     void postEditModeCorrections() {
 //        for (KGUI g : applet.GUIList) { //(g.EditedElements -> EditedElements)
-            for (UI e : EditedElements) {
+            for (Component e : EditedElements) {
                 e.printSettings();
-                if (e instanceof RegionComponent) {
-                    RegionComponent re = (RegionComponent) e;
+                if (e instanceof Component) {
+                    Component re = (Component) e;
                     re.region = null;
                     for (Region r : RegionList) {
                         if (re.isWithinRegion(r)) {

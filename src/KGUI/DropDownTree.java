@@ -8,21 +8,21 @@ import static processing.core.PApplet.*;
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.map;
 
-public class DropDownTree extends RegionComponent {
-    ArrayList<folder> MemberList;
-    int scale = 14;
+public class DropDownTree extends Component {
+    private ArrayList<folder> MemberList;
+    private int scale = 14;
 
     DropDownTree(int x, int y, int MODE1, int endX, int endY, int MODE2, Region parent_, KGUI gui) {
         //pos = new PVector(x, y);
         //posEnd = new PVector(x + endX, y + endY);
         hasColor = false;
         selectable = false;
-        MemberList = new ArrayList<folder>();
-//        this.gui = gui;
-        app = gui.applet;
-        mouse = gui.mouse;
-        mousePos = mouse.pos;
-        region = parent_;
+        MemberList = new ArrayList<>();
+        this.gui = gui;
+        this.app = gui.applet;
+        this.mouse = gui.mouse;
+        this.mousePos = mouse.pos;
+        this.region = parent_;
         calcRelPos(x, y, MODE1, endX, endY, MODE2);
     }
 
@@ -59,7 +59,7 @@ public class DropDownTree extends RegionComponent {
         app.rect(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
     }
 
-    public class folder extends Button implements Executable {
+    public class folder extends Interactable {
         folder parent;
         ArrayList<folder> children;
         DropDownTree enclosure;
@@ -68,18 +68,17 @@ public class DropDownTree extends RegionComponent {
         PVector[] vertices;
         Timer execTimer;
         String title;
-//        KGUI gui;
 
-        folder(DropDownTree enclosure_, folder parent_, String title_) {
-//            gui = enclosure_.gui;
-            title = title_;
-            enclosure = enclosure_;
-            parent = parent_;
-//            app = enclosure.app;
-//            mouse = enclosure.mouse;
-            mousePos = mouse.pos;
+        folder(DropDownTree enclosure, folder parent, String title) {
+            gui = enclosure.gui;
+            this.title = title;
+            this.enclosure = enclosure;
+            this.parent = parent;
+            this.app = enclosure.app;
+            this.mouse = enclosure.mouse;
+            this.mousePos = mouse.pos;
             children = new ArrayList<>();
-            target = this;
+//            target = this;
             vertices = new PVector[3];
             selectable = true;
             states = 2;
@@ -90,7 +89,7 @@ public class DropDownTree extends RegionComponent {
             r = (int) (enclosure.scale / 2.0);
         }
 
-        public boolean exec() {
+        public boolean changeState() {
             if (execTimer.fired()) {
                 execTimer = new Timer(app, execInterval);
                 return true;
@@ -169,6 +168,11 @@ public class DropDownTree extends RegionComponent {
             app.textSize(abs(r * 2));
             app.textAlign(LEFT, CENTER);
             app.text(title, posEnd.x + offset2, pos.y - offset2, enclosure.posEnd.x - posEnd.x - offset2, posEnd.y - pos.y + offset2);
+        }
+
+        @Override
+        public void render() {
+
         }
     }
 }

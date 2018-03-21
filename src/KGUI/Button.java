@@ -3,10 +3,10 @@ package KGUI;
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.color;
 
-public class Button extends ActivatorComponent {
+public class Button extends Transmitter {
     String buttonText;
     String[] stateText;
-    int bezel = 10, state = 0, states;
+    int bezel = 10;
 
     Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui, String... statesText) {
         region = region_;
@@ -17,14 +17,14 @@ public class Button extends ActivatorComponent {
         states = statesText.length;
         stateText = statesText;
         buttonText = stateText[0];
-//        this.gui = gui;
-//        this.app = gui.applet;
-//        this.mouse = gui.mouse;
-//        this.mousePos = mouse.pos;
+        this.gui = gui;
+        this.app = gui.applet;
+        this.mouse = gui.mouse;
+        this.mousePos = mouse.pos;
     }
 
-    Button() {
-    }
+//    Button() {
+//    }
 
     public void render() {
         //renderDepth();
@@ -35,17 +35,6 @@ public class Button extends ActivatorComponent {
 
         if (isMouseOver()) {
             mouse.setKind(HAND);
-        }
-    }
-
-    void registerClick() {
-        if (gui.activeElement == this && !gui.editMode) {
-            if (target.exec()) {
-                app.println(this + " firing");
-                state++;
-                state %= states;
-            }
-            gui.activeElement = null;
         }
     }
 
@@ -79,5 +68,10 @@ public class Button extends ActivatorComponent {
         buttonText = stateText[state];
         //println(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
         app.text(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
+    }
+
+    @Override
+    boolean changeState() {
+        return target.exec();
     }
 }
