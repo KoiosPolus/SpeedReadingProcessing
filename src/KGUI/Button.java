@@ -1,9 +1,11 @@
 package KGUI;
 
+import javafx.scene.chart.Axis;
+
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.color;
 
-public class Button extends RegionComponent {
+public class Button extends Activatable {
     String buttonText;
     String[] stateText;
     int bezel = 10, state = 0, states;

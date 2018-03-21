@@ -11,6 +11,7 @@ import static processing.core.PApplet.map;
 
 public class Region extends RegionComponent implements Executable {
     ArrayList<DropDownTree.folder> MemberList;
+    Executable target = null;
     String buttonText;
     final int bezel = 10;
     private boolean hidden = false, hasMoved = false;
@@ -123,7 +124,6 @@ public class Region extends RegionComponent implements Executable {
 
 abstract class RegionComponent extends UI {
     Region region = null;
-    Executable target = null;
     PVector relPos, pPos, pPosEnd;
     float moveRatio = 1;
 
