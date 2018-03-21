@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="ProcessingCore">
+    <CLASSES>
+      <root url="jar://C:/Program Files/processing-3.3.6/core/library/gluegen-rt.jar!/" />
+      <root url="jar://C:/Program Files/processing-3.3.6/core/library/gluegen-rt-natives-windows-amd64.jar!/" />
+      <root url="jar://C:/Program Files/processing-3.3.6/core/library/jogl-all.jar!/" />
+      <root url="jar://C:/Program Files/processing-3.3.6/core/library/jogl-all-natives-windows-amd64.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
