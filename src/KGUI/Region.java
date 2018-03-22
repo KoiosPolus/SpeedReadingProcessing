@@ -9,8 +9,10 @@ import static processing.core.PApplet.color;
 import static processing.core.PApplet.lerp;
 import static processing.core.PApplet.map;
 
-public class Region extends Component implements Executable {
-    private ArrayList<Component> MemberList;
+public class Region extends RegionComponent implements Executable {
+    ArrayList<DropDownTree.folder> MemberList;
+    Executable target = null;
+    String buttonText;
     final int bezel = 10;
     private boolean hidden = false, hasMoved = false;
     private Timer execTimer;
@@ -18,8 +20,7 @@ public class Region extends Component implements Executable {
     private PVector pPos, pPosEnd;
     private int vectorType;
 
-    Region(KGUI gui, int startX, int startY, int endX, int endY, int mode) {
-        MemberList = new ArrayList<>();
+    Region(KGUI gui, int startX, int startY,int endX, int endY, int mode) {
         vectorType = mode;
         pos = new PVector(startX, startY);
         posEnd = new PVector(startX + endX, startY + endY);
@@ -29,13 +30,13 @@ public class Region extends Component implements Executable {
         selectable = false;
         editable = false;
         this.gui = gui;
-        this.app = gui.applet;
-        this.mouse = gui.mouse;
-        this.mousePos = mouse.pos;
+        app = gui.applet;
+        mouse = gui.mouse;
+        mousePos = mouse.pos;
         execTimer = new Timer(app, execInterval);
     }
 
-    PVector getVector(int x, int y, int mode) {
+    static PVector getVector(int x, int y, int mode) {
         float newX = x;
         float newY = y;
         if (mode == RELATIVE) {
@@ -45,20 +46,17 @@ public class Region extends Component implements Executable {
         return new PVector(newX, newY);
     }
 
-    public final MenuBar createMenu() {
-        MenuBar menu = new MenuBar(gui, this, (int) pos.x, (int) pos.y, (int) posEnd.x, (int) (pos.y + 30), ABSOLUTE);
-        MemberList.add(menu);
-        return menu;
+    final MenuBar createMenu() {
+        return new MenuBar(gui, (int) pos.x, (int) pos.y, (int) posEnd.x,  (int) (pos.y + 100), ABSOLUTE);
     }
 
-    @Override
     public void render() {
-        this.transition();
-        this.applyStyle();
-        this.renderShape();
-        for (Component e : this.MemberList) {
-            e.render();
-        }
+        //renderDepth();
+        renderBox();
+
+        //if (activeElement == this) {
+        //  //activeElement = null;
+        //}
     }
 
     boolean hasMoved() {
@@ -74,69 +72,128 @@ public class Region extends Component implements Executable {
         return false;
     }
 
-    void transition() {
+    void renderBox() {
         float moveDist = posEnd.x - pos.x;
         if (execTimer.percent() < 100) {
             hasMoved = true;
             if (hidden) {
-                pos.x = lerp(pPos.x - moveDist, pPos.x, execTimer.percent() / 100);
-                posEnd.x = lerp(pPosEnd.x - moveDist, pPosEnd.x, execTimer.percent() / 100);
+                pos.x =  lerp(pPos.x - moveDist, pPos.x, execTimer.percent()/100);
+                posEnd.x =  lerp(pPosEnd.x - moveDist, pPosEnd.x, execTimer.percent()/100);
             } else {
-                pos.x = lerp(pPos.x, pPos.x - moveDist, execTimer.percent() / 100);
-                posEnd.x = lerp(pPosEnd.x, pPosEnd.x - moveDist, execTimer.percent() / 100);
+                pos.x =  lerp(pPos.x, pPos.x - moveDist, execTimer.percent()/100);
+                posEnd.x =  lerp(pPosEnd.x, pPosEnd.x - moveDist, execTimer.percent()/100);
             }
         } else {
             hasMoved = false;
         }
-    }
 
-    void applyStyle() {
         //stroke(boarder1);
         app.noStroke();
-        app.fill(color(primaryCol, primaryAlpha));
+        app.fill(color(color1, colorAlpha1));
         app.strokeWeight(boarderWidth1);
-    }
-
-    void renderShape() {
+        //println(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, bezel2, bezel3, 0);
         app.rect(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, 0, 0, 0);
+        //if (isMouseOver()) {
+        //  int overlay = mousePressed ? overlay2 : overlay1;
+        //  fill(color(overlay, overlayAlpha));
+        //  noStroke();
+        //  rect(pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y, 0, bezel2, bezel3, 0);
+        //}
     }
 
     public class MenuBar extends Region {
 
-        MenuBar(KGUI gui, Region region, int startX, int startY, int endX, int endY, int mode) {
-            super(gui, startX, startY, endX, endY, mode);
-            this.region = region;
-            System.out.println(pos);
-            System.out.println(posEnd);
-            calcRelPos(0, 0, RELATIVE, endX -  startX, 50, ABSOLUTE);
+        MenuBar(KGUI gui, int startX, int startY,int endX, int endY, int mode) {
+            super(gui, startX, startY,endX, endY, mode);
         }
 
         @Override
-        void applyStyle() {
-            app.noStroke();
-            app.fill(color(0, 255, 0, secondaryAlpha));
-            app.strokeWeight(boarderWidth2);
-        }
-
-        class MenuComponent extends Transmitter {
-
-            @Override
-            public void render() {
-                adjustRelPos();
-                transition();
-                applyStyle();
-                renderShape();
-                for (Component e : MemberList) {
-                    e.render();
-                }
-            }
-
-            @Override
-            boolean changeState() {
-                return false;
-            }
+        public void render() {
+            renderBox();
         }
     }
 
+    class MenuComponent extends RegionComponent {
+
+        @Override
+        public void render() {
+
+        }
+    }
 }
 
+abstract class RegionComponent extends UI {
+    Region region = null;
+    PVector relPos, pPos, pPosEnd;
+    float moveRatio = 1;
+
+    final boolean isWithinRegion(Region r) {
+        if (pos.x >= r.pos.x && posEnd.x <= r.posEnd.x && pos.y >= r.pos.y && posEnd.y <= r.posEnd.y) {
+            return true;
+        } else return false;
+    }
+
+    //Translations are performed directly on the passed PVectors
+    final void posLerp(PVector begin, PVector end, int direction, float amt) {
+        if (begin.x > end.x || begin.y > end.y) {
+            throw new RuntimeException("Cannot perform posLerp() on invalid begin/end vectors");
+        }
+        switch (direction) {
+            case NORTH:
+                begin.y = lerp(end.y, begin.y, amt);
+                end.y = lerp(end.y, begin.y, amt);
+                break;
+            case SOUTH:
+                begin.y = lerp(begin.y, end.y, amt);
+                end.y = lerp(begin.y, end.y, amt);
+                break;
+            case EAST:
+                begin.x = lerp(end.x, begin.x, amt);
+                end.x = lerp(end.x, begin.x, amt);
+                break;
+            case WEST:
+                begin.x = lerp(begin.x, end.x, amt);
+                end.x = lerp(begin.x, end.x, amt);
+                break;
+                default:
+                    throw new RuntimeException("Invalid direction parameter, valid directions are: NORTH, SOUTH, EAST, WEST");
+        }
+    }
+
+    final void calcRelPos(int... vals) { //(xVal, yVal, MODE, xScale, yScale, MODE)
+        if (region != null) {
+            if (vals.length == 6) {
+                if (vals[2] == RELATIVE) {
+                    pos = new PVector(map(vals[0], 0, 100, region.pos.x + offset2, region.posEnd.x - offset2), map(vals[1], 0, 100, region.pos.y + offset2, region.posEnd.y - offset2));
+                } else {
+                    pos = new PVector(region.pos.x + vals[0], region.pos.y + vals[1]);
+                }
+                if (vals[5] == RELATIVE) {
+                    posEnd = new PVector(map(vals[3], 0, 100, region.pos.x + offset2, region.posEnd.x - offset2), map(vals[4], 0, 100, region.pos.y + offset2, region.posEnd.y - offset2));
+                } else {
+                    posEnd = new PVector(pos.x + vals[3], pos.y + vals[4]);
+                }
+            }
+            relPos = PVector.sub(PVector.add(region.pos, region.posEnd), PVector.add(pos, posEnd)).mult(0.5F);
+        }
+    }
+
+    final void adjustRelPos() {
+        PVector pRelPos = relPos;
+        calcRelPos();
+        PVector dRelPos = PVector.sub(relPos, pRelPos).mult(moveRatio);
+        pos.add(dRelPos);
+        posEnd.add(dRelPos);
+    }
+
+    final void confirmPos() {
+        if (!Objects.equals(region, null)) {
+            if (region.hasMoved()) {
+                adjustRelPos();
+                calcRelPos();
+            } else if (gui.editMode && gui.activeElement == this) {
+                calcRelPos();
+            }
+        }
+    }
+}
