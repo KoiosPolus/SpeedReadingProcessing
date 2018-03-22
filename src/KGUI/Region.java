@@ -164,12 +164,18 @@ abstract class RegionComponent extends UI {
         if (region != null) {
             if (vals.length == 6) {
                 if (vals[2] == RELATIVE) {
-                    pos = new PVector(map(vals[0], 0, 100, region.pos.x + offset2, region.posEnd.x - offset2), map(vals[1], 0, 100, region.pos.y + offset2, region.posEnd.y - offset2));
+                    float x = lerp(region.pos.x + offset2, region.posEnd.x - offset2, vals[0]/100);
+                    float y = lerp(region.pos.y + offset2, region.posEnd.y - offset2, vals[1]/100);
+                    pos = new PVector(x, y);
                 } else {
                     pos = new PVector(region.pos.x + vals[0], region.pos.y + vals[1]);
                 }
                 if (vals[5] == RELATIVE) {
-                    posEnd = new PVector(map(vals[3], 0, 100, region.pos.x + offset2, region.posEnd.x - offset2), map(vals[4], 0, 100, region.pos.y + offset2, region.posEnd.y - offset2));
+//                    float x = map(vals[3], 0, 100, region.pos.x + offset2, region.posEnd.x - offset2);
+//                    float y = map(vals[4], 0, 100, region.pos.y + offset2, region.posEnd.y - offset2);
+                    float x = lerp(region.pos.x + offset2, region.posEnd.x - offset2, vals[3]/100);
+                    float y = lerp(region.pos.y + offset2, region.posEnd.y - offset2, vals[4]/100);
+                    posEnd = new PVector(x, y);
                 } else {
                     posEnd = new PVector(pos.x + vals[3], pos.y + vals[4]);
                 }
@@ -178,7 +184,7 @@ abstract class RegionComponent extends UI {
         }
     }
 
-    final void adjustRelPos() {
+    final static void adjustRelPos() {
         PVector pRelPos = relPos;
         calcRelPos();
         PVector dRelPos = PVector.sub(relPos, pRelPos).mult(moveRatio);

@@ -25,7 +25,6 @@ public class Main extends PApplet {
     }
 
     List<KGUI> GUIList;
-    KGUI primaryGUI;
     ArrayList<Cabinet> CabinetList;
     KGUI MainGui;
     PGraphics rendition;
