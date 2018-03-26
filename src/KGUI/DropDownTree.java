@@ -8,7 +8,7 @@ import static processing.core.PApplet.*;
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.map;
 
-public class DropDownTree extends RegionComponent {
+public class DropDownTree extends Component {
     ArrayList<folder> MemberList;
     int scale = 14;
 

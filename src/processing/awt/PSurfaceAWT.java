@@ -1436,6 +1436,7 @@ public class PSurfaceAWT extends PSurfaceNone {
 
       public void focusLost(FocusEvent e) {
         sketch.focused = false;
+        sketch.clearKeys();
         sketch.focusLost();
       }
     });

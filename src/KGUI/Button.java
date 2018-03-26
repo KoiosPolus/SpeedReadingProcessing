@@ -1,13 +1,17 @@
 package KGUI;
 
 import javafx.scene.chart.Axis;
+import processing.core.PApplet;
+
+import java.util.Arrays;
 
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.color;
+import static processing.core.PApplet.println;
 
 public class Button extends Activatable {
-    String buttonText;
-    String[] stateText;
+    private String buttonText;
+    private String[] stateText;
     int bezel = 10, state = 0, states;
 
     Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui_, String... statesText) {
@@ -43,7 +47,7 @@ public class Button extends Activatable {
     void registerClick() {
         if (gui.activeElement == this && !gui.editMode) {
             if (target.exec()) {
-                app.println(this + " firing");
+                PApplet.println(this + " firing");
                 state++;
                 state %= states;
             }
@@ -54,6 +58,7 @@ public class Button extends Activatable {
     void renderShape() {
         //stroke(boarder1);
         //println(app);
+        println(pos);
         app.strokeWeight(boarderWidth2);
         rawShape();
         app.fill(color(overlay1, overlayAlpha1));
@@ -64,7 +69,7 @@ public class Button extends Activatable {
         }
     }
 
-    void rawShape() {
+    private void rawShape() {
         app.noStroke();
         if (state == 0) {
             app.noFill();

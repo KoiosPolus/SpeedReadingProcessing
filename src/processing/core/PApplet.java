@@ -26,52 +26,44 @@ package processing.core;
 
 // used by link()
 
-import java.awt.Desktop;
-import java.awt.DisplayMode;
-import java.awt.EventQueue;
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.HeadlessException;
-import java.awt.Image;
-import java.awt.Toolkit;
+import org.xml.sax.SAXException;
+import processing.data.*;
+import processing.event.Event;
+import processing.event.KeyEvent;
+import processing.event.MouseEvent;
+import processing.opengl.PGL;
+import processing.opengl.PGraphicsOpenGL;
+import processing.opengl.PShader;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.filechooser.FileSystemView;
+import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-
-// used by loadImage() functions
-import javax.imageio.ImageIO;
-// allows us to remove our own MediaTracker code
-import javax.swing.ImageIcon;
-// used by selectInput(), selectOutput(), selectFolder()
-import javax.swing.JFileChooser;
-import javax.swing.UIManager;
-// used to present the fullScreen() warning about Spaces on OS X
-import javax.swing.JOptionPane;
-// used by desktopFile() method
-import javax.swing.filechooser.FileSystemView;
-
-// loadXML() error handling
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
-
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.text.*;
+import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.regex.*;
-import java.util.zip.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import processing.data.*;
-import processing.event.*;
-import processing.opengl.*;
+// used by loadImage() functions
+// allows us to remove our own MediaTracker code
+// used by selectInput(), selectOutput(), selectFolder()
+// used to present the fullScreen() warning about Spaces on OS X
+// used by desktopFile() method
+// loadXML() error handling
 
-
+//TODO Made PApplet, settings, setup and draw abstract so that children will be forced to Override
 /**
  * Base class for all sketches that use processing.core.
  * <p/>
@@ -107,7 +99,7 @@ import processing.opengl.*;
  * project of our (tiny) size, we should be focusing on the future, rather
  * than working around legacy Java code.
  */
-public class PApplet implements PConstants {
+public abstract class PApplet implements PConstants {
     /**
      * Full name of the Java version (i.e. 1.5.0_11).
      */
@@ -1047,11 +1039,7 @@ public class PApplet implements PConstants {
      * @see PApplet#size(int, int)
      * @see PApplet#smooth()
      */
-    public void settings() {
-        // is this necessary? (doesn't appear to be, so removing)
-        //size(DEFAULT_WIDTH, DEFAULT_HEIGHT, JAVA2D);
-    }
-
+    public abstract void settings();
 
     final public int sketchWidth() {
         return width;
@@ -1205,11 +1193,9 @@ public class PApplet implements PConstants {
                 } catch (Exception ignore) {
                 }
             }
-        } else if (PApplet.platform == PConstants.WINDOWS ||
-                PApplet.platform == PConstants.LINUX) {
+        } else if (PApplet.platform == PConstants.WINDOWS || PApplet.platform == PConstants.LINUX) {
             if (suggestedDensity == -1) {
-                // TODO: detect and return DPI scaling using JNA; Windows has
-                //   a system-wide value, not sure how it works on Linux
+                // TODO: detect and return DPI scaling using JNA; Windows has a system-wide value, not sure how it works on Linux
                 return 1;
             } else if (suggestedDensity == 1 || suggestedDensity == 2) {
                 return suggestedDensity;
@@ -1828,8 +1814,7 @@ public class PApplet implements PConstants {
      * @see PApplet#noLoop()
      * @see PApplet#draw()
      */
-    public void setup() {
-    }
+    public abstract void setup();
 
     /**
      * ( begin auto-generated from draw.xml )
@@ -1861,11 +1846,12 @@ public class PApplet implements PConstants {
      * @see PApplet#frameRate(float)
      * @see PGraphics#background(float, float, float, float)
      */
-    public void draw() {
-        // if no draw method, then shut things down
-        //System.out.println("no draw method, goodbye");
-        finished = true;
-    }
+    public abstract void draw();
+//    {
+//        // if no draw method, then shut things down
+//        //System.out.println("no draw method, goodbye");
+//        finished = true;
+//    }
 
 
     //////////////////////////////////////////////////////////////
@@ -3181,7 +3167,11 @@ public class PApplet implements PConstants {
 
 
     public void focusLost() {
-        // TODO: if user overrides this without calling super it's not gonna work
+//        pressedKeys.clear();
+    }
+
+    // TODO when the focusLost eventListener is triggered, this function will be called, allowing the user to freely override focusLost();
+    public void clearKeys() {
         pressedKeys.clear();
     }
 
@@ -8365,6 +8355,7 @@ public class PApplet implements PConstants {
     /**
      * @deprecated Use arrayCopy() instead.
      */
+    @Deprecated
     static public void arraycopy(Object src, int srcPosition,
                                  Object dst, int dstPosition,
                                  int length) {
@@ -8374,6 +8365,7 @@ public class PApplet implements PConstants {
     /**
      * @deprecated Use arrayCopy() instead.
      */
+    @Deprecated
     static public void arraycopy(Object src, Object dst, int length) {
         System.arraycopy(src, 0, dst, 0, length);
     }
@@ -10701,11 +10693,9 @@ public class PApplet implements PConstants {
         // Doesn't seem to do anything helpful here (that can't be done via Runner)
         //System.setProperty("com.apple.mrj.application.apple.menu.about.name", "potato");
 
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            public void uncaughtException(Thread t, Throwable e) {
-                e.printStackTrace();
-                uncaughtThrowable = e;
-            }
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            e.printStackTrace();
+            uncaughtThrowable = e;
         });
 
         // This doesn't work, need to mess with Info.plist instead
@@ -10728,7 +10718,6 @@ public class PApplet implements PConstants {
       }
     }
     */
-
         // Catch any HeadlessException to provide more useful feedback
         try {
             // Call validate() while resize events are in progress

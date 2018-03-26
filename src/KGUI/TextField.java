@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.textWidth;
 
-public class TextField extends RegionComponent {
+public class TextField extends Component {
     Timer typeCursorBlinkTimer;
     int typeCursorBlinkTime = 5;
     float ctpo = 0;

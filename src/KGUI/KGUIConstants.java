@@ -32,4 +32,6 @@ public interface KGUIConstants extends PConstants {
             SOUTH = 3,
             EAST = 4,
             WEST= 5;
+
+    String ddtFolder = "KGUI.DropDownTree.folder";
 }
