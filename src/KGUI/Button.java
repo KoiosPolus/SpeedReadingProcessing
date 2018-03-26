@@ -1,14 +1,20 @@
 package KGUI;
 
+import javafx.scene.chart.Axis;
+import processing.core.PApplet;
+
+import java.util.Arrays;
+
 import static processing.core.PApplet.abs;
 import static processing.core.PApplet.color;
+import static processing.core.PApplet.println;
 
-public class Button extends Transmitter {
-    String buttonText;
-    String[] stateText;
-    int bezel = 10;
+public class Button extends Activatable {
+    private String buttonText;
+    private String[] stateText;
+    int bezel = 10, state = 0, states;
 
-    Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui, String... statesText) {
+    Button(Region region_, int xPercent, int yPercent, int sizeX, int sizeY, Executable target_, KGUI gui_, String... statesText) {
         region = region_;
         target = target_;
         calcRelPos(xPercent, yPercent, RELATIVE, sizeX, sizeY, ABSOLUTE);
@@ -17,14 +23,14 @@ public class Button extends Transmitter {
         states = statesText.length;
         stateText = statesText;
         buttonText = stateText[0];
-        this.gui = gui;
-        this.app = gui.applet;
-        this.mouse = gui.mouse;
-        this.mousePos = mouse.pos;
+        gui = gui_;
+        app = gui.applet;
+        mouse = gui.mouse;
+        mousePos = mouse.pos;
     }
 
-//    Button() {
-//    }
+    Button() {
+    }
 
     public void render() {
         //renderDepth();
@@ -38,9 +44,21 @@ public class Button extends Transmitter {
         }
     }
 
+    void registerClick() {
+        if (gui.activeElement == this && !gui.editMode) {
+            if (target.exec()) {
+                PApplet.println(this + " firing");
+                state++;
+                state %= states;
+            }
+            gui.activeElement = null;
+        }
+    }
+
     void renderShape() {
         //stroke(boarder1);
         //println(app);
+        println(pos);
         app.strokeWeight(boarderWidth2);
         rawShape();
         app.fill(color(overlay1, overlayAlpha1));
@@ -51,7 +69,7 @@ public class Button extends Transmitter {
         }
     }
 
-    void rawShape() {
+    private void rawShape() {
         app.noStroke();
         if (state == 0) {
             app.noFill();
@@ -68,10 +86,5 @@ public class Button extends Transmitter {
         buttonText = stateText[state];
         //println(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
         app.text(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
-    }
-
-    @Override
-    boolean changeState() {
-        return target.exec();
     }
 }

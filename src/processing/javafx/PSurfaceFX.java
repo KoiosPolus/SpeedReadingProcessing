@@ -162,11 +162,7 @@ public class PSurfaceFX implements PSurface {
             setOnMouseDragged(mouseHandler);
             setOnMouseMoved(mouseHandler);
 
-            setOnScroll(new EventHandler<ScrollEvent>() {
-                public void handle(ScrollEvent e) {
-                    fxScrollEvent(e);
-                }
-            });
+            setOnScroll(e -> fxScrollEvent(e));
 
             EventHandler<KeyEvent> keyHandler = new EventHandler<KeyEvent>() {
                 public void handle(KeyEvent e) {
@@ -180,16 +176,15 @@ public class PSurfaceFX implements PSurface {
 
             setFocusTraversable(false);  // prevent tab from de-focusing
 
-            focusedProperty().addListener(new ChangeListener<Boolean>() {
-                public void changed(ObservableValue<? extends Boolean> value,
-                                    Boolean oldValue, Boolean newValue) {
-                    if (newValue.booleanValue()) {
-                        sketch.focused = true;
-                        sketch.focusGained();
-                    } else {
-                        sketch.focused = false;
-                        sketch.focusLost();
-                    }
+            focusedProperty().addListener((value, oldValue, newValue) -> {
+                //TODO passed args no longer extend Boolean but are used as-is. (is there a reason they shouldn't be?)
+                if (newValue) {
+                    sketch.focused = true;
+                    sketch.focusGained();
+                } else {
+                    sketch.focused = false;
+                    sketch.clearKeys();
+                    sketch.focusLost();
                 }
             });
         }

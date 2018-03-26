@@ -908,6 +908,7 @@ public class PSurfaceJOGL implements PSurface {
     @Override
     public void windowLostFocus(com.jogamp.newt.event.WindowEvent arg0) {
       sketch.focused = false;
+      sketch.clearKeys();
       sketch.focusLost();
     }
 
