@@ -13,6 +13,6 @@ public class Main {
 //        PApplet.runSketch(new String[] {""}, new GUITests());
 //        PApplet.runSketch(new String[] {""}, new SpeedReader());
 //        PApplet.main(new String[]{"SpeedReader"});
-        PApplet.main("sketches.SpeedReader");
+        PApplet.main(SpeedReader.class.getName());
     }
 }

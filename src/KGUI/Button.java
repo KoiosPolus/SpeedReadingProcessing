@@ -84,7 +84,6 @@ public class Button extends Activatable {
         app.textSize(abs(posEnd.y - pos.y - textSpacing));
         app.textAlign(CENTER, TOP);
         buttonText = stateText[state];
-        //println(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
         app.text(buttonText, pos.x, pos.y, posEnd.x - pos.x, posEnd.y - pos.y);
     }
 }
