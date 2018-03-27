@@ -1,9 +1,12 @@
 package sketches;
 
 import processing.core.PApplet;
+import processing.core.PStyle;
 
+import java.io.*;
 import java.text.BreakIterator;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class SpeedReader extends PApplet {
 
@@ -12,60 +15,114 @@ public class SpeedReader extends PApplet {
         size(400, 400, P2D);
     }
 
-    private Iterator<String> wordIterator;
-    private Iterator<String> sentenceIterator;
-    private Iterator<Float> timeIterator;
-    private int baseDelay = 600; //100 WPM
-    private float scale = 5.0F;
-    private float sentenceDelay = baseDelay * 4 / scale;
-    private float nTime = 0;
-    private String word = "";
+    private TimedTextParser timedTextParser;
     private String nWord = "";
+    private int nTime = 0;
+    private float totalTime = 0;
+    private int wordCount = 0;
 
     @Override
     public void setup() {
-        sentenceIterator = getSentences(textToBeRead).iterator();
-        String firstSentence = sentenceIterator.next();
-        wordIterator = getWords(firstSentence).iterator();
-        timeIterator = getTimes(getWords(firstSentence), baseDelay / scale).iterator();
+//        textFile = new File(System.getProperty("user.dir"), "src\\TextToBeRead.txt");
+        timedTextParser = new TimedTextParser(new File(System.getProperty("user.dir"), "src\\TextToBeRead.txt"));
+        loadStyles();
         textAlign(CENTER, CENTER);
-        textSize(height / 8);
-//        frameRate(2);
+        textSize(height/8);
         background(100);
-//        nextWord();
         nTime += millis();
     }
 
-
     @Override
     public void draw() {
-//        noLoop();
         background(100);
         ellipse(mouseX, mouseY, 15, 15);
         if (millis() >= nTime) {
-            word = nWord;
-            nWord = nextWord();
+            Pair<String, Float> nextSet = timedTextParser.nextInstance();
+            totalTime += nextSet.b;
+            wordCount++;
+            nWord = nextSet.a;
+            nTime += nextSet.b;
+            System.out.println(nWord + " : " + nextSet.b);
         }
-        text(word, 0, 0, width, height);
+//        style(currentStyle);
+        text(nWord, 0, 0, width, height);
+        text((float) (wordCount)/totalTime*100000, width/2, 100);
     }
-    /*
-    Get timer for the word, display the word for the given time, increment both.
-     */
 
-    private String nextWord() {
-        String nextWord = "";
-        if (wordIterator.hasNext()) {
-            nextWord = wordIterator.next();
-            nTime += timeIterator.next();
-        } else if (sentenceIterator.hasNext()) {
-            String nextSentence = sentenceIterator.next();
-            wordIterator = getWords(nextSentence).iterator();
-            timeIterator = getTimes(getWords(nextSentence), baseDelay / scale).iterator();
-            nextWord = wordIterator.next();
-//            timeIterator.next();
-            nTime += sentenceDelay;
+    PStyle currentStyle = new PStyle();
+    private void loadStyles() {
+        currentStyle.textAlign = CENTER;
+        currentStyle.textAlignY = CENTER;
+        currentStyle.textSize = height / 8;//TODO call this on WindowResize
+        currentStyle.fill = false;
+        currentStyle.fillColor = PApplet.color(200);
+        currentStyle.ambientB = 0;
+        currentStyle.ambientG = 0;
+        currentStyle.ambientR = 0;
+    }
+}
+
+class TimedTextParser {
+
+    private Iterator<String> wordIterator;
+    private Iterator<String> sentenceIterator;
+    private Iterator<Float> timeIterator;
+    private int baseDelay = (int) (260); //~100 WPM delay, adjusted for average word-specific delays
+    private float scale = 10.0F; //speed in 100 WPM
+    private BufferedReader bufferedReader;
+
+    TimedTextParser(File textFile) {
+        //TODO Add in a file selector
+        //TODO Add compatibility for more file types
+        try {
+            bufferedReader = new BufferedReader(new FileReader(textFile));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Invalid File directory: " + textFile.getAbsolutePath());
         }
-        return nextWord;
+        sentenceIterator = nextSection().iterator();
+        nextSentence();
+//        nextSection();
+//        String firstSentence = sentenceIterator.next();
+//        wordIterator = getWords(firstSentence).iterator();
+//        timeIterator = getTimes(getWords(firstSentence), baseDelay / scale).iterator();
+//        wordIterator.next();
+//        timeIterator.next();
+    }
+
+    public Pair<String, Float> nextInstance() {
+        String nextWord;
+        float nextTime;
+        if (wordIterator.hasNext() && timeIterator.hasNext()) {
+            nextWord = wordIterator.next();
+            nextTime = timeIterator.next();
+        } else {
+            if (sentenceIterator.hasNext()) {
+                nextSentence();
+            } else {
+                nextSection();
+            }
+            return nextInstance();
+        }
+        return Pair.makePair(nextWord, nextTime);
+    }
+
+    private List<String> nextSection() {
+        List<String> nextSection = new ArrayList<>();
+        try {//TODO the buffer size of Buffered reader is so huge that I have no idea what happens at the end of a line.
+            nextSection = getSentences(softenText(bufferedReader.readLine()));
+//            nextSection.remove(nextSection.size() - 1);
+            System.out.println(nextSection);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return nextSection;
+    }
+
+    private void nextSentence() {
+        String nextSentence = sentenceIterator.next();
+        wordIterator = getWords(nextSentence).iterator();
+        timeIterator = getTimes(getWords(nextSentence), baseDelay / scale).iterator();
     }
 
     private static List<String> getWords(String text) {
@@ -76,35 +133,51 @@ public class SpeedReader extends PApplet {
     }
 
     private static List<Float> getTimes(List<String> words, float baseValue) {
-//        List<Float> times = new ArrayList<>();
         List<Float> times = new TimeList(baseValue);
-        TimeList timeList = (TimeList) times;
         for (String s : words) {
-            Character c = s.charAt(s.length() - 1);
-            if (c >= 48 && c <= 57) {
-//                times.add(baseDelay * 2 / scale);
-                timeList.multByBase(2);
-            } else {
-                switch (c) {
-                    case ',':
-                        timeList.multByBase(2);
-                        break;
-                    case '-':
-                        timeList.multByBase(1.5F);
-                        break;
-                    case '—':
-                        timeList.multByBase(2);
-                        break;
-                    case ':':
-                        timeList.multByBase(2);
-                        break;
-                    default:
-                        timeList.multByBase(1);
-                        break;
-                }
-            }
+            ((TimeList) times).multByBase(calcDelay(s));
         }
         return times;
+    }
+
+    private static float calcDelay(String word) {
+        float delay = 1 + word.length() * 0.5F;
+        Character c = word.charAt(word.length() - 1);
+        if (c >= 48 && c <= 57) {
+//                times.add(baseDelay + 2 / scale);
+            delay += 2;
+        } else {
+            switch (c) {
+                case ',':
+                    delay += 3.5F;
+                    break;
+                case '-':
+                    delay += 1.5F;
+                    break;
+                case '—':
+                    delay += 2;
+                    break;
+                case ':':
+                    delay += 3.5;
+                    break;
+                case '?':
+                    delay += 4;
+                    break;
+                case '.':
+                    delay += 6;
+                    break;
+                case '"':
+                    delay += 4;
+                    break;
+                case '”':
+                    delay += 4;
+                    break;
+                default:
+                    delay += 1;
+                    break;
+            }
+        }
+        return delay;
     }
 
     private static List<String> getSentences(String text) {
@@ -131,73 +204,26 @@ public class SpeedReader extends PApplet {
         return words;
     }
 
-    /*  Put a space after each dash to allow separate word recognition\
-        Got rid of citations which take substantial time to read with no benefit.
-     */
-    private String textToBeRead = "Current approaches to object recognition make essential use of machine learning methods. To improve " +
-            "their performance, we can collect larger datasets, learn more powerful models, and use better " +
-            "techniques for preventing overfitting. Until recently, datasets of labeled images were relatively " +
-            "small — on the order of tens of thousands of images. Simple recognition tasks can be solved quite well with datasets of this size, " +
-            "especially if they are augmented with label- preserving transformations. For example, the currentbest " +
-            "error rate on the MNIST digit- recognition task (<0.3%) approaches human performance. " +
-            "But objects in realistic settings exhibit considerable variability, so to learn to recognize them it is " +
-            "necessary to use much larger training sets. And indeed, the shortcomings of small image datasets " +
-            "have been widely recognized, but it has only recently become possible to collect " +
-            "labeled datasets with millions of images. The new larger datasets include LabelMe, which " +
-            "consists of hundreds of thousands of fully- segmented images, and ImageNet, which consists of " +
-            "over 15 million labeled high- resolution images in over 22,000 categories. " +
-            "To learn about thousands of objects from millions of images, we need a model with a large learning " +
-            "capacity. However, the immense complexity of the object recognition task means that this problem " +
-            "cannot be specified even by a dataset as large as ImageNet, so our model should also have lots " +
-            "of prior knowledge to compensate for all the data we don’t have. Convolutional neural networks " +
-            "(CNNs) constitute one such class of models. Their capacity can be controlled " +
-            "by varying their depth and breadth, and they also make strong and mostly correct assumptions " +
-            "about the nature of images (namely, stationarity of statistics and locality of pixel dependencies). " +
-            "Thus, compared to standard feedforward neural networks with similarly- sized layers, CNNs have " +
-            "much fewer connections and parameters and so they are easier to train, while their theoretically- best " +
-            "performance is likely to be only slightly worse. " +
-            "Despite the attractive qualities of CNNs, and despite the relative efficiency of their local architecture, " +
-            "they have still been prohibitively expensive to apply in large scale to high- resolution images. Luckily, " +
-            "current GPUs, paired with a highly- optimized implementation of 2D convolution, are powerful " +
-            "enough to facilitate the training of interestingly- large CNNs, and recent datasets such as ImageNet " +
-            "contain enough labeled examples to train such models without severe overfitting. " +
-            "The specific contributions of this paper are as follows: we trained one of the largest convolutional " +
-            "neural networks to date on the subsets of ImageNet used in the ILSVRC- 2010 and ILSVRC- 2012 " +
-            "competitions and achieved by far the best results ever reported on these datasets. We wrote a " +
-            "highly- optimized GPU implementation of 2D convolution and all the other operations inherent in " +
-            "training convolutional neural networks, which we make available publicly1 " +
-            ". Our network contains " +
-            "a number of new and unusual features which improve its performance and reduce its training time, " +
-            "which are detailed in Section 3. The size of our network made overfitting a significant problem, even " +
-            "with 1.2 million labeled training examples, so we used several effective techniques for preventing " +
-            "overfitting, which are described in Section 4. Our final network contains five convolutional and " +
-            "three fully- connected layers, and this depth seems to be important: we found that removing any " +
-            "convolutional layer (each of which contains no more than 1% of the model’s parameters) resulted in " +
-            "inferior performance. " +
-            "In the end, the network’s size is limited mainly by the amount of memory available on current GPUs " +
-            "and by the amount of training time that we are willing to tolerate. Our network takes between five " +
-            "and six days to train on two GTX 580 3GB GPUs. All of our experiments suggest that our results " +
-            "can be improved simply by waiting for faster GPUs and bigger datasets to become available.";
-
-    static void test() {
-        List test = new TimeList(1);
-        ((TimeList) test).multByBase(2);
-    }
-}
-
-class TimeList extends ArrayList<Float> {
-    private float baseValue;
-
-    TimeList(float baseValue) {
-        super();
-        this.baseValue = baseValue;
+    private static String softenText(String content) {
+        Pattern p = Pattern.compile("[-—]"); // Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+        return p.matcher(content).replaceAll("- ");
     }
 
-    public void setBaseValue(float baseValue) {
-        this.baseValue = baseValue;
+    static class TimeList extends ArrayList<Float> {
+        private float baseValue;
+
+        TimeList(float baseValue) {
+            super();
+            this.baseValue = baseValue;
+        }
+
+        public void setBaseValue(float baseValue) {
+            this.baseValue = baseValue;
+        }
+
+        public void multByBase(float mult) {
+            this.add(baseValue * mult);
+        }
     }
 
-    public void multByBase(float mult) {
-        this.add(baseValue * mult);
-    }
 }
