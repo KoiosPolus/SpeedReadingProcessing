@@ -2,17 +2,17 @@ package sketches;
 
 import processing.core.PApplet;
 import processing.core.PStyle;
+import processing.data.FloatDict;
 
 import java.io.*;
-import java.text.BreakIterator;
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class SpeedReader extends PApplet {
 
     @Override
     public void settings() {
-        size(400, 400, P2D);
+//        size(400, 400, P2D);
+        fullScreen(P2D, 3);
     }
 
     private TimedTextParser timedTextParser;
@@ -36,6 +36,7 @@ public class SpeedReader extends PApplet {
     public void draw() {
         background(100);
         ellipse(mouseX, mouseY, 15, 15);
+//        System.out.println(nTime);
         if (millis() >= nTime) {
             Pair<String, Float> nextSet = timedTextParser.nextInstance();
             totalTime += nextSet.b;
@@ -46,7 +47,7 @@ public class SpeedReader extends PApplet {
         }
 //        style(currentStyle);
         text(nWord, 0, 0, width, height);
-        text((float) (wordCount) / totalTime * 100000, width / 2, 100);
+        text((wordCount * 100000.0F)  / totalTime, width / 2, 100);
     }
 
     PStyle currentStyle = new PStyle();
@@ -71,50 +72,25 @@ public class SpeedReader extends PApplet {
     }
 }
 
-class TimedTextParser {
+class TimedTextParser extends TextParser {
 
-    private Iterator<String> wordIterator;
-    private Iterator<String> sentenceIterator;
     private Iterator<Float> timeIterator;
-    private int baseDelay = 260; //~100 WPM delay, adjusted for average word-specific delays
-    private float scale = 10.0F; //speed in 100 WPM
-    private BufferedReader bufferedReader;
-    private ArrayList<Integer> timeCount = new ArrayList<>();
+    float baseDelay = 255.0F;
+    private float scale = 7.0F;
+    //    private float scale = 3.33F; //speed in 100 WPM
+    private static String[] keys = new  String[] {"," , "-" , "—", ":" , "?", ".", "\"", "”"};
+    private static float[] times = new  float[] {3.5F, 2.5F, 2, 3.5F, 4, 8, 4, 4} ;
+
+    private static FloatDict charTimes = new FloatDict(keys, times);
 
     TimedTextParser(File textFile) {
-        //TODO Add in a file selector
-        //TODO Add compatibility for more file types
-        try {
-            bufferedReader = new BufferedReader(new FileReader(textFile));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Invalid File directory: " + textFile.getAbsolutePath());
-        }
-        sentenceIterator = nextSection().iterator();
-        nextSentence();
-//        nextSection();
-//        String firstSentence = sentenceIterator.next();
-//        wordIterator = getWords(firstSentence).iterator();
-//        timeIterator = getTimes(getWords(firstSentence), baseDelay / scale).iterator();
-//        wordIterator.next();
-//        timeIterator.next();
+        super(textFile);
+        timeIterator = getTimes(getWords(currentSentence), baseDelay / scale).iterator();
     }
 
-    public Pair<String, Float> nextInstance() {
-        String nextWord;
-        float nextTime;
-        if (wordIterator.hasNext() && timeIterator.hasNext()) {
-            nextWord = wordIterator.next();
-            nextTime = timeIterator.next();
-//            adjustwpm(timeCount);
-        } else {
-            if (sentenceIterator.hasNext()) {
-                nextSentence();
-            } else {
-                nextSection();
-            }
-            return nextInstance();
-        }
+    Pair<String, Float> nextInstance() {
+        String nextWord = nextWord();
+        float nextTime = nextWord != null ? timeIterator.next() : 0F;
         return Pair.makePair(nextWord, nextTime);
     }
 
@@ -132,36 +108,21 @@ class TimedTextParser {
 //        System.out.println(scale);
 //    }
 
-    public void incSpeed() {
+    @Override
+    public void nextSentence() {
+        currentSentence = sentenceIterator.next();
+        wordIterator = getWords(currentSentence).iterator();
+        float var = baseDelay / scale;
+//        System.out.println("Divisor: " + baseDelay + ", Dividend: " + scale + ", result: " + var);
+        timeIterator = getTimes(getWords(currentSentence), var).iterator();
+    }
+
+    void incSpeed() {
         scale++;
     }
-    public void decSpeed() {
+
+    void decSpeed() {
         scale--;
-    }
-
-    private List<String> nextSection() {
-        List<String> nextSection = new ArrayList<>();
-        try {//TODO the buffer size of Buffered reader is so huge that I have no idea what happens at the end of a line.
-            nextSection = getSentences(softenText(bufferedReader.readLine()));
-//            nextSection.remove(nextSection.size() - 1);
-            System.out.println(nextSection);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return nextSection;
-    }
-
-    private void nextSentence() {
-        String nextSentence = sentenceIterator.next();
-        wordIterator = getWords(nextSentence).iterator();
-        timeIterator = getTimes(getWords(nextSentence), baseDelay / scale).iterator();
-    }
-
-    private static List<String> getWords(String text) {
-//        BreakIterator breakIterator = BreakIterator.getWordInstance();
-//        return parseTextToList(text, breakIterator);
-        String[] array = text.split(" ");
-        return new ArrayList<>(Arrays.asList(array));
     }
 
     private static List<Float> getTimes(List<String> words, float baseValue) {
@@ -179,66 +140,14 @@ class TimedTextParser {
 //                times.add(baseDelay + 2 / scale);
             delay += 2;
         } else {
-            switch (c) {
-                case ',':
-                    delay += 3.5F;
-                    break;
-                case '-':
-                    delay += 1.5F;
-                    break;
-                case '—':
-                    delay += 2;
-                    break;
-                case ':':
-                    delay += 3.5;
-                    break;
-                case '?':
-                    delay += 4;
-                    break;
-                case '.':
-                    delay += 6;
-                    break;
-                case '"':
-                    delay += 4;
-                    break;
-                case '”':
-                    delay += 4;
-                    break;
-                default:
-                    delay += 1;
-                    break;
-            }
+            delay += charTimes.get(c.toString(), 0);
         }
+        if (c == '"' || c == '”') {
+            c = word.charAt(word.length() - 2);
+            delay += charTimes.get(c.toString(), 0);
+        }
+//        return 1;
         return delay;
-    }
-
-    private static List<String> getSentences(String text) {
-        BreakIterator breakIterator = BreakIterator.getSentenceInstance(Locale.US);
-        return parseTextToList(text, breakIterator);
-    }
-
-    private static List<String> getSimpleWords(String text) {
-        BreakIterator breakIterator = BreakIterator.getWordInstance(Locale.US);
-        return parseTextToList(text, breakIterator);
-    }
-
-    private static List<String> parseTextToList(String text, BreakIterator breakIterator) {
-        List<String> words = new ArrayList<>();
-        breakIterator.setText(text);
-        int lastIndex = breakIterator.first();
-        while (BreakIterator.DONE != lastIndex) {
-            int firstIndex = lastIndex;
-            lastIndex = breakIterator.next();
-            if (lastIndex != BreakIterator.DONE && Character.isLetterOrDigit(text.charAt(firstIndex))) {
-                words.add(text.substring(firstIndex, lastIndex));
-            }
-        }
-        return words;
-    }
-
-    private static String softenText(String content) {
-        Pattern p = Pattern.compile("[-—]"); // Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-        return p.matcher(content).replaceAll("- ");
     }
 
     static class TimeList extends ArrayList<Float> {
@@ -254,7 +163,8 @@ class TimedTextParser {
         }
 
         public void multByBase(float mult) {
-            this.add(baseValue * mult);
+            this.add(this.baseValue * mult);
         }
     }
 }
+
