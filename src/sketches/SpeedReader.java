@@ -27,7 +27,7 @@ public class SpeedReader extends PApplet {
         timedTextParser = new TimedTextParser(new File(System.getProperty("user.dir"), "src\\TextToBeRead.txt"));
         loadStyles();
         textAlign(CENTER, CENTER);
-        textSize(height/8);
+        textSize(height / 8);
         background(100);
         nTime += millis();
     }
@@ -42,14 +42,15 @@ public class SpeedReader extends PApplet {
             wordCount++;
             nWord = nextSet.a;
             nTime += nextSet.b;
-            System.out.println(nWord + " : " + nextSet.b);
+//            System.out.println(nWord + " : " + nextSet.b);
         }
 //        style(currentStyle);
         text(nWord, 0, 0, width, height);
-        text((float) (wordCount)/totalTime*100000, width/2, 100);
+        text((float) (wordCount) / totalTime * 100000, width / 2, 100);
     }
 
     PStyle currentStyle = new PStyle();
+
     private void loadStyles() {
         currentStyle.textAlign = CENTER;
         currentStyle.textAlignY = CENTER;
@@ -60,6 +61,14 @@ public class SpeedReader extends PApplet {
         currentStyle.ambientG = 0;
         currentStyle.ambientR = 0;
     }
+
+    public void keyPressed() {
+        if (keyCode == UP) {
+            timedTextParser.incSpeed();
+        } else if (keyCode == DOWN) {
+            timedTextParser.decSpeed();
+        }
+    }
 }
 
 class TimedTextParser {
@@ -67,9 +76,10 @@ class TimedTextParser {
     private Iterator<String> wordIterator;
     private Iterator<String> sentenceIterator;
     private Iterator<Float> timeIterator;
-    private int baseDelay = (int) (260); //~100 WPM delay, adjusted for average word-specific delays
+    private int baseDelay = 260; //~100 WPM delay, adjusted for average word-specific delays
     private float scale = 10.0F; //speed in 100 WPM
     private BufferedReader bufferedReader;
+    private ArrayList<Integer> timeCount = new ArrayList<>();
 
     TimedTextParser(File textFile) {
         //TODO Add in a file selector
@@ -96,6 +106,7 @@ class TimedTextParser {
         if (wordIterator.hasNext() && timeIterator.hasNext()) {
             nextWord = wordIterator.next();
             nextTime = timeIterator.next();
+//            adjustwpm(timeCount);
         } else {
             if (sentenceIterator.hasNext()) {
                 nextSentence();
@@ -105,6 +116,27 @@ class TimedTextParser {
             return nextInstance();
         }
         return Pair.makePair(nextWord, nextTime);
+    }
+
+//    private void adjustwpm(int nextTime) {
+//        int sampleSize = 100;
+//        int goalwpm = 1000;
+//        int wpmmargin = 50;
+//
+//        System.out.println((100 * 60000));
+//        if ((60000F)  + wpmmargin < goalwpm) {
+//            scale++;
+//        } else if (60000 > goalwpm + wpmmargin) {
+//            scale--;
+//        }
+//        System.out.println(scale);
+//    }
+
+    public void incSpeed() {
+        scale++;
+    }
+    public void decSpeed() {
+        scale--;
     }
 
     private List<String> nextSection() {
@@ -225,5 +257,4 @@ class TimedTextParser {
             this.add(baseValue * mult);
         }
     }
-
 }
