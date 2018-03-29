@@ -6,6 +6,7 @@ import processing.data.FloatDict;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.LongAdder;
 
 public class SpeedReader extends PApplet {
 
@@ -47,7 +48,7 @@ public class SpeedReader extends PApplet {
         }
 //        style(currentStyle);
         text(nWord, 0, 0, width, height);
-        text((wordCount * 100000.0F)  / totalTime, width / 2, 100);
+        text(timedTextParser.getWpm(), width / 2, 100);
     }
 
     PStyle currentStyle = new PStyle();
@@ -73,30 +74,42 @@ public class SpeedReader extends PApplet {
                 break;
             case SPAN:
 
-                    break;
+                break;
         }
     }
 }
 
 class TimedTextParser extends TextParser {
 
+    private final int sampleSize = 10;
     private Iterator<Float> timeIterator;
     float baseDelay = 255.0F;
     private float scale = 7.0F;
+    private float totalTime = 0;
+    List<Float> recentTimes = new ArrayList<>();
     //    private float scale = 3.33F; //speed in 100 WPM
-    private static String[] keys = new  String[] {"," , "-" , "—", ":" , "?", ".", "\"", "”"};
-    private static float[] times = new  float[] {3.5F, 2.5F, 2, 3.5F, 4, 8, 4, 4} ;
+    private static String[] keys = new String[]{",", "-", "—", ":", "?", ".", "\"", "”"};
+    private static float[] times = new float[]{3.5F, 2.5F, 2, 3.5F, 4, 8, 4, 4};
 
     private static FloatDict charTimes = new FloatDict(keys, times);
 
     TimedTextParser(File textFile) {
         super(textFile);
         timeIterator = getTimes(getWords(currentSentence), baseDelay / scale).iterator();
+        for (int i = 0; i < sampleSize; i++) {
+            recentTimes.add(scale * 100);
+        }
+        totalTime = scale * 100 * sampleSize;
     }
 
     Pair<String, Float> nextInstance() {
         String nextWord = nextWord();
         float nextTime = nextWord != null ? timeIterator.next() : 0F;
+        totalTime += nextTime;
+        recentTimes.add(nextTime);
+        totalTime -= recentTimes.get(0);
+        recentTimes.remove(0);
+//        Optional<Float> totalTime = recentTimes.parallelStream().reduce((x, y) -> x + y);
         return Pair.makePair(nextWord, nextTime);
     }
 
@@ -129,6 +142,10 @@ class TimedTextParser extends TextParser {
 
     void decSpeed() {
         scale--;
+    }
+
+    public float getWpm() {
+        return sampleSize / (totalTime /1000);
     }
 
     private static List<Float> getTimes(List<String> words, float baseValue) {
