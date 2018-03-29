@@ -64,10 +64,16 @@ public class SpeedReader extends PApplet {
     }
 
     public void keyPressed() {
-        if (keyCode == UP) {
-            timedTextParser.incSpeed();
-        } else if (keyCode == DOWN) {
-            timedTextParser.decSpeed();
+        switch (keyCode) {
+            case UP:
+                timedTextParser.incSpeed();
+                break;
+            case DOWN:
+                timedTextParser.decSpeed();
+                break;
+            case SPAN:
+
+                    break;
         }
     }
 }
