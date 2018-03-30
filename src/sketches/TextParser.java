@@ -6,8 +6,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public class TextParser {
-    Iterator<String> wordIterator;
-    Iterator<String> sentenceIterator;
+    ListIterator<String> wordIterator;
+    ListIterator<String> sentenceIterator;
     String currentSentence;
     private BufferedReader bufferedReader;
     boolean endReached = false;
@@ -21,7 +21,7 @@ public class TextParser {
             e.printStackTrace();
             throw new RuntimeException("Invalid File directory: " + textFile.getAbsolutePath());
         }
-        sentenceIterator = nextSection().iterator();
+        sentenceIterator = nextSection().listIterator();
         nextSentence(); //TODO although nextSentence is overwritten in the derived class, it's not being properly called by the super constructor
 //        nextSection();
 //        String firstSentence = sentenceIterator.next();
@@ -38,7 +38,7 @@ public class TextParser {
         } else {
             if (sentenceIterator.hasNext()) {
                 nextSentence();
-            } else if (!endReached){
+            } else if (!endReached) {
                 nextSection();
             } else {
                 return null;
@@ -66,8 +66,19 @@ public class TextParser {
     }
 
     public void nextSentence() {
-        currentSentence = sentenceIterator.next();
-        wordIterator = getWords(currentSentence).iterator();
+        if (sentenceIterator.hasNext())
+            currentSentence = sentenceIterator.next();
+        refreshSentence();
+    }
+
+    public void previousSentence() {
+        if (sentenceIterator.hasPrevious())
+            currentSentence = sentenceIterator.previous();
+        refreshSentence();
+    }
+
+    public void refreshSentence() {
+        wordIterator = getWords(currentSentence).listIterator();
     }
 
     public static List<String> getWords(String text) {

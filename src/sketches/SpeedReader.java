@@ -6,7 +6,6 @@ import processing.data.FloatDict;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.LongAdder;
 
 public class SpeedReader extends PApplet {
 
@@ -19,8 +18,7 @@ public class SpeedReader extends PApplet {
     private TimedTextParser timedTextParser;
     private String nWord = "";
     private int nTime = 0;
-    private float totalTime = 0;
-    private int wordCount = 0;
+    private boolean paused = false;
 
     @Override
     public void setup() {
@@ -38,10 +36,8 @@ public class SpeedReader extends PApplet {
         background(100);
         ellipse(mouseX, mouseY, 15, 15);
 //        System.out.println(nTime);
-        if (millis() >= nTime) {
+        if (millis() >= nTime && !paused) {
             Pair<String, Float> nextSet = timedTextParser.nextInstance();
-            totalTime += nextSet.b;
-            wordCount++;
             nWord = nextSet.a;
             nTime += nextSet.b;
 //            System.out.println(nWord + " : " + nextSet.b);
@@ -72,8 +68,16 @@ public class SpeedReader extends PApplet {
             case DOWN:
                 timedTextParser.decSpeed();
                 break;
-            case SPAN:
-
+            case LEFT:
+                timedTextParser.previousSentence();
+                break;
+            case RIGHT:
+                timedTextParser.nextSentence();
+                break;
+            case 32:
+                paused = !paused;
+                nTime = millis();
+                timedTextParser.refreshSentence();
                 break;
         }
     }
@@ -82,7 +86,7 @@ public class SpeedReader extends PApplet {
 class TimedTextParser extends TextParser {
 
     private final int sampleSize = 10;
-    private Iterator<Float> timeIterator;
+    private ListIterator<Float> timeIterator;
     float baseDelay = 255.0F;
     private float scale = 7.0F;
     private float totalTime = 0;
@@ -95,7 +99,7 @@ class TimedTextParser extends TextParser {
 
     TimedTextParser(File textFile) {
         super(textFile);
-        timeIterator = getTimes(getWords(currentSentence), baseDelay / scale).iterator();
+        timeIterator = getTimes(getWords(currentSentence), baseDelay / scale).listIterator();
         for (int i = 0; i < sampleSize; i++) {
             recentTimes.add(scale * 100);
         }
@@ -128,12 +132,11 @@ class TimedTextParser extends TextParser {
 //    }
 
     @Override
-    public void nextSentence() {
-        currentSentence = sentenceIterator.next();
-        wordIterator = getWords(currentSentence).iterator();
+    public void refreshSentence() {
+        wordIterator = getWords(currentSentence).listIterator();
         float var = baseDelay / scale;
 //        System.out.println("Divisor: " + baseDelay + ", Dividend: " + scale + ", result: " + var);
-        timeIterator = getTimes(getWords(currentSentence), var).iterator();
+        timeIterator = getTimes(getWords(currentSentence), var).listIterator();
     }
 
     void incSpeed() {
@@ -145,7 +148,7 @@ class TimedTextParser extends TextParser {
     }
 
     public float getWpm() {
-        return sampleSize / (totalTime /1000);
+        return sampleSize / (totalTime / 1000);
     }
 
     private static List<Float> getTimes(List<String> words, float baseValue) {
