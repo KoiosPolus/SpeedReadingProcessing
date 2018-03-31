@@ -39,7 +39,7 @@ public class TextParser {
             if (sentenceIterator.hasNext()) {
                 nextSentence();
             } else if (!endReached) {
-                nextSection();
+                sentenceIterator = nextSection().listIterator();
             } else {
                 return null;
             }
@@ -55,6 +55,7 @@ public class TextParser {
                 nextSection = getSentences(softenText(bufferedReader.readLine()));
                 System.out.println(nextSection);
             } else {
+//                System.out.println(getSentences(softenText(bufferedReader.readLine())));
                 bufferedReader.close();
                 endReached = true;
                 System.out.println("End of document reached");
@@ -79,6 +80,10 @@ public class TextParser {
 
     public void refreshSentence() {
         wordIterator = getWords(currentSentence).listIterator();
+    }
+
+    public String getCurrentSentence() {
+        return currentSentence;
     }
 
     public static List<String> getWords(String text) {
@@ -117,5 +122,4 @@ public class TextParser {
         Pattern p = Pattern.compile("[-—]"); // Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
         return p.matcher(content).replaceAll("- ");
     }
-
 }

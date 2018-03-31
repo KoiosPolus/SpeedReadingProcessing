@@ -1,12 +1,7 @@
 package controller;
 
 import processing.core.PApplet;
-import sketches.GUITests;
 import sketches.SpeedReader;
-import sketches.TextParser;
-
-import java.io.File;
-import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
@@ -14,16 +9,20 @@ public class Main {
         String display = "--display";
         String color = "--window-color";
         String windowLoc = "--location";
-
-//        TextParser textParser = new TextParser(new File(System.getProperty("user.dir"), "src\\WordFrequencies.csv"));
-//        for (int i = 0; i < 3; i++) {
-////            textParser.nextSentence();
-//            String nextWord = textParser.nextWord();
-//            if (nextWord == null) break;
-////                System.out.println(nextWord);
-//        }
-
         PApplet.main(SpeedReader.class.getName());
+    }
+}
 
+class testing {
+    char[] couples;
+
+    testing() {
+        couples = new char[10];
+        orderCouples(couples);
+    }
+
+    void orderCouples(char[] unorderedCouples) {
+        // create rows for convenience
+        //Assign rows to symbolic couples
     }
 }

@@ -2,23 +2,22 @@ package sketches;
 
 import processing.core.PApplet;
 import processing.core.PStyle;
-import processing.data.FloatDict;
 
 import java.io.*;
-import java.util.*;
 
 public class SpeedReader extends PApplet {
 
     @Override
     public void settings() {
-//        size(400, 400, P2D);
-        fullScreen(P2D, 3);
+        size(400, 400, P2D);
+//        fullScreen(P2D);
     }
 
     private TimedTextParser timedTextParser;
     private String nWord = "";
     private int nTime = 0;
     private boolean paused = false;
+    private int backgroundCol = color(100);
 
     @Override
     public void setup() {
@@ -27,15 +26,20 @@ public class SpeedReader extends PApplet {
         loadStyles();
         textAlign(CENTER, CENTER);
         textSize(height / 8);
-        background(100);
         nTime += millis();
     }
 
     @Override
     public void draw() {
-        background(100);
+        background(backgroundCol);
         ellipse(mouseX, mouseY, 15, 15);
-//        System.out.println(nTime);
+
+        renderWord();
+        renderSentence();
+        text(timedTextParser.getWpm(), width / 2, 100);
+    }
+
+    private void renderWord() {
         if (millis() >= nTime && !paused) {
             Pair<String, Float> nextSet = timedTextParser.nextInstance();
             nWord = nextSet.a;
@@ -43,11 +47,44 @@ public class SpeedReader extends PApplet {
 //            System.out.println(nWord + " : " + nextSet.b);
         }
 //        style(currentStyle);
+        textSize(height / 8);
         text(nWord, 0, 0, width, height);
-        text(timedTextParser.getWpm(), width / 2, 100);
     }
 
-    PStyle currentStyle = new PStyle();
+    private void renderSentence() {
+        textSize(height / 24);
+        String currentSentence = timedTextParser.getCurrentSentence();
+        int center = currentSentence.indexOf(nWord);
+        int max = currentSentence.length();
+        int viewRange = 30;
+        int x = width / 2;
+        int y = height - height / 8;
+        text(currentSentence.substring(
+                constrain(center - viewRange, 0, max),
+                constrain(center + viewRange, 0, max)
+        ), x, y);
+        setGradient(0, height - height/4, width/2, height, color(backgroundCol), color(backgroundCol, 0), Axis.X);
+        setGradient(width/2, height - height/4, width, height, color(backgroundCol, 0), color(backgroundCol), Axis.X);
+    }
+
+    private void setGradient(int x1, int y1, float x2, float y2, int c1, int c2, Axis axis) {
+        noFill();
+        if (x1 >= x2 || y1 >= y2) throw new RuntimeException("End position must be greater than start position.");
+
+        if (axis == Axis.Y) {  // Top to bottom gradient
+            for (int i = y1; i <= y2; i++) {
+                stroke(lerpColor(c1, c2, map(i, y1, y2, 0, 1)));
+                line(x1, i, x2, i);
+            }
+        } else if (axis == Axis.X) {  // Left to right gradient
+            for (int i = x1; i <= x2; i++) {
+                stroke(lerpColor(c1, c2, map(i, x1, x2, 0, 1)));
+                line(i, y1, i, y2);
+            }
+        }
+    }
+
+    private PStyle currentStyle = new PStyle();
 
     private void loadStyles() {
         currentStyle.textAlign = CENTER;
@@ -82,115 +119,3 @@ public class SpeedReader extends PApplet {
         }
     }
 }
-
-class TimedTextParser extends TextParser {
-
-    private final int sampleSize = 10;
-    private ListIterator<Float> timeIterator;
-    float baseDelay = 255.0F;
-    private float scale = 7.0F;
-    private float totalTime = 0;
-    List<Float> recentTimes = new ArrayList<>();
-    //    private float scale = 3.33F; //speed in 100 WPM
-    private static String[] keys = new String[]{",", "-", "—", ":", "?", ".", "\"", "”"};
-    private static float[] times = new float[]{3.5F, 2.5F, 2, 3.5F, 4, 8, 4, 4};
-
-    private static FloatDict charTimes = new FloatDict(keys, times);
-
-    TimedTextParser(File textFile) {
-        super(textFile);
-        timeIterator = getTimes(getWords(currentSentence), baseDelay / scale).listIterator();
-        for (int i = 0; i < sampleSize; i++) {
-            recentTimes.add(scale * 100);
-        }
-        totalTime = scale * 100 * sampleSize;
-    }
-
-    Pair<String, Float> nextInstance() {
-        String nextWord = nextWord();
-        float nextTime = nextWord != null ? timeIterator.next() : 0F;
-        totalTime += nextTime;
-        recentTimes.add(nextTime);
-        totalTime -= recentTimes.get(0);
-        recentTimes.remove(0);
-//        Optional<Float> totalTime = recentTimes.parallelStream().reduce((x, y) -> x + y);
-        return Pair.makePair(nextWord, nextTime);
-    }
-
-//    private void adjustwpm(int nextTime) {
-//        int sampleSize = 100;
-//        int goalwpm = 1000;
-//        int wpmmargin = 50;
-//
-//        System.out.println((100 * 60000));
-//        if ((60000F)  + wpmmargin < goalwpm) {
-//            scale++;
-//        } else if (60000 > goalwpm + wpmmargin) {
-//            scale--;
-//        }
-//        System.out.println(scale);
-//    }
-
-    @Override
-    public void refreshSentence() {
-        wordIterator = getWords(currentSentence).listIterator();
-        float var = baseDelay / scale;
-//        System.out.println("Divisor: " + baseDelay + ", Dividend: " + scale + ", result: " + var);
-        timeIterator = getTimes(getWords(currentSentence), var).listIterator();
-    }
-
-    void incSpeed() {
-        scale++;
-    }
-
-    void decSpeed() {
-        scale--;
-    }
-
-    public float getWpm() {
-        return sampleSize / (totalTime / 1000);
-    }
-
-    private static List<Float> getTimes(List<String> words, float baseValue) {
-        List<Float> times = new TimeList(baseValue);
-        for (String s : words) {
-            ((TimeList) times).multByBase(calcDelay(s));
-        }
-        return times;
-    }
-
-    private static float calcDelay(String word) {
-        float delay = 1 + word.length() * 0.5F;
-        Character c = word.charAt(word.length() - 1);
-        if (c >= 48 && c <= 57) {
-//                times.add(baseDelay + 2 / scale);
-            delay += 2;
-        } else {
-            delay += charTimes.get(c.toString(), 0);
-        }
-        if (c == '"' || c == '”') {
-            c = word.charAt(word.length() - 2);
-            delay += charTimes.get(c.toString(), 0);
-        }
-//        return 1;
-        return delay;
-    }
-
-    static class TimeList extends ArrayList<Float> {
-        private float baseValue;
-
-        TimeList(float baseValue) {
-            super();
-            this.baseValue = baseValue;
-        }
-
-        public void setBaseValue(float baseValue) {
-            this.baseValue = baseValue;
-        }
-
-        public void multByBase(float mult) {
-            this.add(this.baseValue * mult);
-        }
-    }
-}
-

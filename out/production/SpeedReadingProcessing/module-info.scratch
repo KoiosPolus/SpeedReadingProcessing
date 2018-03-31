@@ -1,8 +1,0 @@
-module SpeedReadingProcessing {
-    requires javafx.graphics;
-    requires java.desktop;
-    requires java.management;
-    requires java.sql;
-    requires jogl.all;
-    requires gluegen.rt;
-}
