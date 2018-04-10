@@ -11,12 +11,12 @@ public class TimedTextParser extends TextParser {
 
     private ListIterator<Float> timeIterator;
     private float baseDelay = 175F;
-    private float scale = 7F;
+    private float scale = 5F;
     private float totalTime;
     private final int sampleSize = 25;
     private List<Float> recentTimes = new ArrayList<>();
-    private static String[] keys = new String[]{",", "-", "—", ":", "?", ".", "\"", "”"};
-    private static float[] times = new float[]{2.75F, 1.75F, 1, 1.75F, 2, 4, 2, 2};
+    private static String[] keys = new String[]{",", "-", "—", ":", "?", ".", "\"", "”", ""};
+    private static float[] times = new float[]{2.75F, 1.75F, 1, 1.75F, 2, 4, 2, 2, 10};
     private static FloatDict charTimes = new FloatDict(keys, times);
 
     TimedTextParser(File textFile) {
@@ -82,18 +82,20 @@ public class TimedTextParser extends TextParser {
 
     private static float calcDelay(String word) {
         float delay = 1 + word.length() * 0.5F;
-        Character c = word.charAt(word.length() - 1);
-        if (c >= 48 && c <= 57) {
+        if (word.length() >= 1) {
+            Character c = word.charAt(word.length() - 1);
+            if (c >= 48 && c <= 57) {
 //                times.add(baseDelay + 2 / scale);
-            delay += 2;
-        } else {
-            delay += charTimes.get(c.toString(), 0);
-        }
-        if (c == '"' || c == '”') {
-            c = word.charAt(word.length() - 2);
-            delay += charTimes.get(c.toString(), 0);
-        }
+                delay += 4;
+            } else {
+                delay += charTimes.get(c.toString(), 0);
+                if (c == '"' || c == '”') {
+                    c = word.charAt(word.length() - 2);
+                    delay += charTimes.get(c.toString(), 0);
+                }
+            }
 //        return 1;
+        }
         return delay;
     }
 
