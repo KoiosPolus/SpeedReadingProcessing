@@ -67,19 +67,25 @@ public class TextParser {
     }
 
     public void nextSentence() {
-        if (sentenceIterator.hasNext())
+        if (sentenceIterator.hasNext()) {
             currentSentence = sentenceIterator.next();
-        refreshSentence();
+            refreshSentence();
+        }
     }
 
     public void previousSentence() {
-        if (sentenceIterator.hasPrevious())
+        if (sentenceIterator.hasPrevious()) {
             currentSentence = sentenceIterator.previous();
-        refreshSentence();
+            refreshSentence();
+        }
     }
 
     public void refreshSentence() {
         wordIterator = getWords(currentSentence).listIterator();
+    }
+
+    public boolean isEndReached() {
+        return endReached;
     }
 
     public String getCurrentSentence() {

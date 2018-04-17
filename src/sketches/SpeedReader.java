@@ -9,8 +9,8 @@ public class SpeedReader extends PApplet {
 
     @Override
     public void settings() {
-        size(400, 400, P2D);
-//        fullScreen(P2D);
+//        size(400, 400, P2D);
+        fullScreen(P2D, 3);
     }
 
     private TimedTextParser timedTextParser;
@@ -40,15 +40,17 @@ public class SpeedReader extends PApplet {
     }
 
     private void renderWord() {
-        if (millis() >= nTime && !paused) {
+        textSize(height / 8);
+        text(nWord, 0, 0, width, height);
+        if (millis() >= nTime && !paused && !timedTextParser.isEndReached()) {
             Pair<String, Float> nextSet = timedTextParser.nextInstance();
-            nWord = nextSet.a;
-            nTime += nextSet.b;
+            if (nextSet.a != null) {
+                nWord = nextSet.a;
+                nTime += nextSet.b;
+            }
 //            System.out.println(nWord + " : " + nextSet.b);
         }
 //        style(currentStyle);
-        textSize(height / 8);
-        text(nWord, 0, 0, width, height);
     }
 
     private void renderSentence() {
