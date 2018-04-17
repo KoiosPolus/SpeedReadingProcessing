@@ -86,6 +86,14 @@ public class TextParser {
         return currentSentence;
     }
 
+    public boolean hasNext() {
+        return sentenceIterator.hasNext();
+    }
+
+    public boolean hasPrevious() {
+        return sentenceIterator.hasPrevious();
+    }
+
     public static List<String> getWords(String text) {
 //        BreakIterator breakIterator = BreakIterator.getWordInstance();
 //        return parseTextToList(text, breakIterator);
@@ -123,3 +131,5 @@ public class TextParser {
         return p.matcher(content).replaceAll("- ");
     }
 }
+
+

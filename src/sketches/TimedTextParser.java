@@ -4,12 +4,14 @@ import processing.data.FloatDict;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
 public class TimedTextParser extends TextParser {
 
     private ListIterator<Float> timeIterator;
+    private HashMap<String, Integer> hashTable;
     private float baseDelay = 175F;
     private float scale = 7F;
     private float totalTime;
@@ -26,6 +28,7 @@ public class TimedTextParser extends TextParser {
             recentTimes.add(scale * 100);
         }
         totalTime = scale * 100 * sampleSize;
+        hashTable = new CommonWordsHashTable().createHashTable(new File(System.getProperty("user.dir"), "src\\WordFrequencies.csv"));
     }
 
     Pair<String, Float> nextInstance() {

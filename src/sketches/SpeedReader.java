@@ -114,7 +114,7 @@ public class SpeedReader extends PApplet {
             case 32:
                 paused = !paused;
                 nTime = millis();
-                timedTextParser.refreshSentence();
+//                timedTextParser.refreshSentence();
                 break;
         }
     }
